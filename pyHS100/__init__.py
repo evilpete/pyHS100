@@ -13,6 +13,7 @@ Module-specific errors are raised as `SmartDeviceException` and are expected
 to be handled by the user of the library.
 """
 # flake8: noqa
+from __future__ import print_function
 from .smartdevice import SmartDevice
 from .smartplug import SmartPlug
 from .types import SmartDeviceException

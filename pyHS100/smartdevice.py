@@ -13,6 +13,8 @@ Stroetmann which is licensed under the Apache License, Version 2.0.
 You may obtain a copy of the license at
 http://www.apache.org/licenses/LICENSE-2.0
 """
+# from __future__ import print_function
+from future.utils import raise_from
 import datetime
 import logging
 import socket
@@ -62,7 +64,8 @@ class SmartDevice(object):
                 request={target: {cmd: arg}}
             )
         except Exception as ex:
-            raise SmartDeviceException('Communication error') from ex
+            # raise SmartDeviceException('Communication error') from ex
+            raise_from(SmartDeviceException('Communication error'), ex)
 
         if target not in response:
             raise SmartDeviceException("No required {} in response: {}"
