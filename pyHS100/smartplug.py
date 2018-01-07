@@ -1,6 +1,7 @@
 from __future__ import print_function
 import datetime
 import logging
+from typing import Any, Dict
 
 from pyHS100 import SmartDevice
 
@@ -31,13 +32,15 @@ class SmartPlug(SmartDevice):
     SWITCH_STATE_OFF = 'OFF'
     SWITCH_STATE_UNKNOWN = 'UNKNOWN'
 
-    def __init__(self, ip_address, protocol=None):
+    def __init__(self,
+                 ip_address: str,
+                 protocol: 'TPLinkSmartHomeProtocol' = None) -> None:
         SmartDevice.__init__(self, ip_address, protocol)
         self.emeter_type = "emeter"
         self.emeter_units = False
 
     @property
-    def state(self):
+    def state(self) -> str:
         """
         Retrieve the switch state
 
@@ -58,7 +61,7 @@ class SmartPlug(SmartDevice):
             return SmartPlug.SWITCH_STATE_UNKNOWN
 
     @state.setter
-    def state(self, value):
+    def state(self, value: str):
         """
         Set the new switch state
 
@@ -79,7 +82,17 @@ class SmartPlug(SmartDevice):
             raise ValueError("State %s is not valid.", value)
 
     @property
-    def is_on(self):
+    def has_emeter(self):
+        """
+        Returns whether device has an energy meter.
+        :return: True if energy meter is available
+                 False otherwise
+        """
+        features = self.sys_info['feature'].split(':')
+        return SmartDevice.FEATURE_ENERGY_METER in features
+
+    @property
+    def is_on(self) -> bool:
         """
         Returns whether device is on.
 
@@ -104,7 +117,7 @@ class SmartPlug(SmartDevice):
         self._query_helper("system", "set_relay_state", {"state": 0})
 
     @property
-    def led(self):
+    def led(self) -> bool:
         """
         Returns the state of the led.
 
@@ -113,15 +126,8 @@ class SmartPlug(SmartDevice):
         """
         return bool(1 - self.sys_info["led_off"])
 
-    @property
-    def state_information(self):
-        return {
-            'LED state': self.led,
-            'On since': self.on_since
-        }
-
     @led.setter
-    def led(self, state):
+    def led(self, state: bool):
         """
         Sets the state of the led (night mode)
 
@@ -131,7 +137,7 @@ class SmartPlug(SmartDevice):
         self._query_helper("system", "set_led_off", {"off": int(not state)})
 
     @property
-    def on_since(self):
+    def on_since(self) -> datetime.datetime:
         """
         Returns pretty-printed on-time
 
@@ -140,3 +146,10 @@ class SmartPlug(SmartDevice):
         """
         return datetime.datetime.now() - \
             datetime.timedelta(seconds=self.sys_info["on_time"])
+
+    @property
+    def state_information(self) -> Dict[str, Any]:
+        return {
+            'LED state': self.led,
+            'On since': self.on_since
+        }

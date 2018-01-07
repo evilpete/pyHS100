@@ -3,6 +3,7 @@ import json
 import socket
 import struct
 import logging
+from typing import Any, Dict, Union
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +26,9 @@ class TPLinkSmartHomeProtocol:
     DEFAULT_TIMEOUT = 5
 
     @staticmethod
-    def query(host, request, port=DEFAULT_PORT):
+    def query(host: str,
+              request: Union[str, Dict],
+              port: int = DEFAULT_PORT) -> Any:
         """
         Request information from a TP-Link SmartHome Device and return the
         response.
@@ -63,12 +66,13 @@ class TPLinkSmartHomeProtocol:
         finally:
             try:
                 sock.shutdown(socket.SHUT_RDWR)
-                sock.close()
             except OSError:
                 # OSX raises OSError when shutdown() gets called on a closed
                 # socket. We ignore it here as the data has already been read
                 # into the buffer at this point.
                 pass
+            finally:
+                sock.close()
 
         response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
         _LOGGER.debug("< (%i) %s", len(response), response)
@@ -76,7 +80,7 @@ class TPLinkSmartHomeProtocol:
         return json.loads(response)
 
     @staticmethod
-    def encrypt(request):
+    def encrypt(request: str) -> bytearray:
         """
         Encrypt a request for a TP-Link Smart Home Device.
 
@@ -94,7 +98,7 @@ class TPLinkSmartHomeProtocol:
         return buffer
 
     @staticmethod
-    def decrypt(ciphertext):
+    def decrypt(ciphertext: bytes) -> str:
         """
         Decrypt a response of a TP-Link Smart Home Device.
 
@@ -104,9 +108,9 @@ class TPLinkSmartHomeProtocol:
         key = TPLinkSmartHomeProtocol.INITIALIZATION_VECTOR
         buffer = []
 
-        ciphertext = ciphertext.decode('latin-1')
+        ciphertext_str = ciphertext.decode('latin-1')
 
-        for char in ciphertext:
+        for char in ciphertext_str:
             plain = key ^ ord(char)
             key = ord(char)
             buffer.append(chr(plain))
